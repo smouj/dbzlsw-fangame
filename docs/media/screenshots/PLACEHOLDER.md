@@ -1,0 +1,1 @@
+Screenshot assets are added only after curation against the current production build.
