@@ -1,0 +1,51 @@
+name: ROM fidelity discrepancy
+description: Report a difference between the project and verified GBC behaviour
+title: "fidelity: "
+body:
+  - type: markdown
+    attributes:
+      value: "Use this for mechanical, timing, animation, camera or presentation differences backed by evidence."
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      options:
+        - Mechanics / rules
+        - Timing / ticks
+        - Camera / shots
+        - Actor / target animation
+        - Projectile / FX
+        - HUD / cards
+        - AI
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What the project currently does
+    validations:
+      required: true
+  - type: textarea
+    id: gbc
+    attributes:
+      label: What the original GBC game does
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Provide derived addresses/ticks/traces or reproducible observations. Do not upload ROMs or raw proprietary dumps.
+    validations:
+      required: true
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Evidence level
+      options:
+        - Confirmed / reproducible
+        - Strong but incomplete
+        - Hypothesis / needs verification
+    validations:
+      required: true

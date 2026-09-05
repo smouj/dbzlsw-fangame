@@ -1,0 +1,29 @@
+name: Research task
+description: Propose a focused reverse-engineering or evidence task
+title: "research: "
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Research question
+      description: Phrase one falsifiable question where possible.
+    validations:
+      required: true
+  - type: textarea
+    id: known
+    attributes:
+      label: What is already known
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Proposed method
+      description: Emulator observation, disassembly inspection, deterministic reproduction, etc.
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      placeholder: What evidence would allow this task to be closed?
+    validations:
+      required: true

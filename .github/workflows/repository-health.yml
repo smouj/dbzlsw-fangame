@@ -1,0 +1,29 @@
+name: Repository health
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  community-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public project contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            README.md LICENSE NOTICE.md CONTRIBUTING.md CODE_OF_CONDUCT.md
+            SECURITY.md SUPPORT.md GOVERNANCE.md
+            docs/PUBLIC_SOURCE_POLICY.md docs/ROM_RESEARCH_POLICY.md
+            docs/PROJECT_STATUS.md docs/ROADMAP.md docs/ARCHITECTURE.md
+          )
+          for file in "${required[@]}"; do
+            test -s "$file" || { echo "Missing required file: $file"; exit 1; }
+          done

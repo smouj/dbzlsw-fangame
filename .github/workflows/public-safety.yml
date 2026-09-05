@@ -1,0 +1,44 @@
+name: Public source safety
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject prohibited tracked paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad="$(git ls-files | grep -Ei '(^|/)(\.openclaw|memory|roms|dumps|savestates)(/|$)|\.(gb|gbc|rom|sav|srm|state|ss[0-9]|gbs)$|^generated/rom-(fighters|fx|stage|animation-core)/|^public/assets/rom-fx/|^public/assets/sprites/[^/]+/(physical|physical-debug)/' || true)"
+          if [ -n "$bad" ]; then
+            echo "Prohibited public-source paths detected:"
+            echo "$bad"
+            exit 1
+          fi
+
+      - name: Reject unexpectedly large tracked files
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r -d '' file; do
+            [ -f "$file" ] || continue
+            size=$(wc -c < "$file")
+            if [ "$size" -gt 26214400 ]; then
+              echo "Tracked file exceeds 25 MiB: $file ($size bytes)"
+              failed=1
+            fi
+          done < <(git ls-files -z)
+          exit "$failed"

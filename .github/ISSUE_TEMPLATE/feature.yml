@@ -1,0 +1,25 @@
+name: Feature / improvement
+description: Propose a project improvement that is not a ROM-fidelity correction
+title: "feat: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope / non-goals
+  - type: textarea
+    id: fidelity
+    attributes:
+      label: Effect on GBC fidelity
+      description: Explain whether this is neutral, accessibility-only, tooling-only or intentionally non-canonical.

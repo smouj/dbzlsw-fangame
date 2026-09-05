@@ -1,0 +1,53 @@
+# Dependencies / build
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.tmp/
+.cache/
+
+# Environment / editors
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Private workspace / agent state
+.openclaw/
+.openclaw/**
+memory/
+openclaw-workspace-state.json
+
+# ROMs / emulator state / raw dumps
+*.gb
+*.gbc
+*.rom
+*.sav
+*.srm
+*.state
+*.ss0
+*.ss1
+*.ss2
+*.gbs
+*.bin
+roms/
+dumps/
+savestates/
+
+# Local ROM-derived outputs: regenerate locally; do not publish by default
+generated/rom-fighters/
+generated/rom-fx/
+generated/rom-stage/
+generated/rom-animation-core/
+docs/rom/generated/fighters/
+public/assets/rom-fx/
+public/assets/sprites/*/physical/
+public/assets/sprites/*/physical-debug/
+public/assets/sprites/*/rom-physical.manifest.json
+
+# Local logs
+*.log
