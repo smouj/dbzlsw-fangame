@@ -23,7 +23,19 @@ jobs:
             SECURITY.md SUPPORT.md GOVERNANCE.md
             docs/PUBLIC_SOURCE_POLICY.md docs/ROM_RESEARCH_POLICY.md
             docs/PROJECT_STATUS.md docs/ROADMAP.md docs/ARCHITECTURE.md
+            docs/FIDELITY.md docs/DEVELOPMENT.md docs/COMMUNITY.md
+            docs/BRANDING.md docs/SCREENSHOTS.md docs/PUBLICATION_CHECKLIST.md
+            docs/RELEASES.md docs/MAINTAINER_SETUP.md
+            docs/media/social-preview.svg
           )
           for file in "${required[@]}"; do
             test -s "$file" || { echo "Missing required file: $file"; exit 1; }
           done
+
+      - name: Verify canonical public links
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'https://www.reddit.com/r/DBZ_LSW_FANGAME/' README.md
+          grep -Fq 'https://github.com/smouj/dbzlsw-fangame' README.md
+          grep -Fq 'docs/media/social-preview.svg' README.md
