@@ -28,6 +28,19 @@ jobs:
             exit 1
           fi
 
+      - name: Reject common secrets and developer-local paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(git ls-files | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|json|ya?ml|md|txt|css|html|env|ini|toml|sh|ps1)$' | grep -v '^\.github/workflows/public-safety.yml$' || true)"
+          [ -n "$files" ] || exit 0
+          bad="$(printf '%s\n' "$files" | xargs -r grep -nEI '([A-Za-z]:\\\\Users\\\\|[A-Za-z]:\\\\CodexProjects\\\\|/home/[^/[:space:]]+/|/Users/[^/[:space:]]+/|github_pat_[A-Za-z0-9_]+|ghp_[A-Za-z0-9]+|xox[baprs]-[A-Za-z0-9-]+|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' || true)"
+          if [ -n "$bad" ]; then
+            echo "Possible secret or developer-local path detected:"
+            echo "$bad"
+            exit 1
+          fi
+
       - name: Reject unexpectedly large tracked files
         shell: bash
         run: |

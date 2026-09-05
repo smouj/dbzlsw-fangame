@@ -1,154 +1,201 @@
 <div align="center">
 
+<img src="docs/media/social-preview.svg" alt="DBZ LSW Fangame — public development preview" width="100%" />
+
 # DBZ LSW Fangame
 
-**Community-driven, research-based recreation of _Dragon Ball Z: Legendary Super Warriors_ for modern systems.**
+**Open-source, community-driven recreation of _Dragon Ball Z: Legendary Super Warriors_ (Game Boy Color), built around reproducible research and deterministic combat.**
 
+[![Public source safety](https://github.com/smouj/dbzlsw-fangame/actions/workflows/public-safety.yml/badge.svg)](https://github.com/smouj/dbzlsw-fangame/actions/workflows/public-safety.yml)
+[![Repository health](https://github.com/smouj/dbzlsw-fangame/actions/workflows/repository-health.yml/badge.svg)](https://github.com/smouj/dbzlsw-fangame/actions/workflows/repository-health.yml)
 [![Status](https://img.shields.io/badge/status-public%20development%20preview-f59e0b)](#project-status)
-[![License: MIT](https://img.shields.io/badge/code%20license-MIT-2563eb)](LICENSE)
-[![Fan Project](https://img.shields.io/badge/project-non--commercial%20fan%20project-6b7280)](#legal-and-project-scope)
+[![License](https://img.shields.io/badge/original%20code-MIT-2563eb)](LICENSE)
+[![Reddit](https://img.shields.io/badge/Reddit-r%2FDBZ__LSW__FANGAME-ff4500?logo=reddit&logoColor=white)](https://www.reddit.com/r/DBZ_LSW_FANGAME/)
 
-Mechanical fidelity · GBC-timed combat · ROM research · deterministic engine · PixiJS presentation · community contributions
+**GBC-timed combat · deterministic runtime · ROM-backed research · PixiJS presentation · open contributions**
+
+[Roadmap](docs/ROADMAP.md) · [Project status](docs/PROJECT_STATUS.md) · [Contributing](CONTRIBUTING.md) · [Community](docs/COMMUNITY.md) · [Fidelity model](docs/FIDELITY.md)
 
 </div>
 
 ---
 
-## What this project is
-
-**DBZ LSW Fangame** is an independent, non-commercial fan project focused on understanding and faithfully recreating the systems, timing, combat flow and presentation grammar of _Dragon Ball Z: Legendary Super Warriors_ (Game Boy Color).
-
-The project is being developed as a modern TypeScript application with a deterministic combat engine and a presentation layer designed around the original Game Boy Color timing model. Reverse-engineering findings are used as technical evidence; unverified behaviour is tracked as such rather than silently approximated.
-
-This repository is the **public collaboration surface** for the project: source code that is safe to redistribute, documentation, tests, tooling, issues and pull requests live here. Private/raw ROM research and non-redistributable material remain outside this repository.
-
 ## Project status
 
-**Public Development Preview / Alpha.**
+> **Public Development Preview / Alpha** — active development. The combat/runtime architecture is already substantial, but visible battle choreography is still being brought into line with the original GBC presentation. Mechanical correctness and visual fidelity are tracked separately.
 
-The underlying project is already substantial, but public-source publication is being staged deliberately so that the public history starts clean and does not accidentally contain ROM files, raw extracted proprietary data, private research material or workspace artefacts.
+The public repository is intentionally starting from a **clean history**. It is not a mirror of private/raw ROM research and it does not distribute a ROM, save states, raw dumps or private development workspace data.
 
-Current development priorities are:
+### Current technical baseline
 
-1. **Visible battle fidelity** — camera/shot choreography, actor-target synchronization, projectile lifecycle and HUD timing.
-2. **Physical animation closure** — resolve remaining incomplete physical sequences and frame provenance.
-3. **Full-battle E2E validation** — deterministic 1v1 and 2v2 battles from initialization through KO/results.
-4. **Public-source hardening** — contributor setup, portable CI and strict separation between redistributable source and local ROM-derived outputs.
+| Area | Current state |
+|---|---|
+| Card database / playability | **125/125 playable** in the active development baseline |
+| Battle authority | Gameplay outcomes resolve through the deterministic battle/runtime layer |
+| Support / LIMIT / defense | Runtime-native; defensive CA53 semantics are applied mechanically |
+| Golden Combat | **11 PASS · 4 PARTIAL · 0 BLOCKED** at the latest published project baseline |
+| Remaining Golden partials | Cont.Punch · Cont.Kick · Energy Bomb · Destruct-Disk |
+| Visible choreography | **Active P0** — camera/shot motion, actor-target synchronization, projectile ordering and HUD timing |
+| Full-match E2E | Planned P0 for deterministic 1v1 and 2v2 matches |
+| Public application source | Staged through [#1](https://github.com/smouj/dbzlsw-fangame/issues/1) after sanitization |
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the public roadmap and [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for the current fidelity model.
+The project does **not** call a feature ROM-faithful merely because the final damage or state is correct. See [Fidelity](docs/FIDELITY.md).
 
-## Fidelity model
+## What this project is
 
-A feature is not considered "ROM-faithful" just because its gameplay result is correct. Mechanical and visible fidelity are tracked independently.
+**DBZ LSW Fangame** is an independent, non-commercial fan project focused on understanding and recreating the mechanics, timing, combat flow and presentation grammar of _Dragon Ball Z: Legendary Super Warriors_ for modern systems.
 
-A combat action is considered complete only when the relevant evidence supports the full chain:
+The active implementation is built around a deterministic TypeScript battle engine and a GBC-tick presentation pipeline. Reverse-engineering findings are treated as evidence with an explicit confidence level. Unknown behaviour remains unknown until it is demonstrated; it is not silently invented to make a test green.
+
+This repository is the project's **public collaboration surface**:
+
+- redistributable source code
+- portable tests and verification tooling
+- public-safe technical documentation
+- issues and pull requests
+- reproducible derived ROM findings
+- community planning and contributor onboarding
+
+Raw/local ROM work and non-redistributable material stay outside the public repository.
+
+## Current development focus
+
+The highest-priority work is visible combat fidelity:
 
 ```text
-input / legality
-→ engine resolution
-→ deterministic EventLog
-→ GBC-timed presentation timeline
-→ camera / shot
-→ actor + target frames and motion
-→ projectile / FX lifecycle
-→ impact / damage / reaction
-→ HUD / hand timing
-→ return to the correct control boundary
+player command / card
+        ↓
+BattleRuntime (single gameplay authority)
+        ↓
+deterministic EventLog
+        ↓
+GBC-timed presentation timeline
+        ↓
+camera / shot / viewport
+        ↓
+actor + target frames and motion
+        ↓
+projectile / FX lifecycle
+        ↓
+impact / defense / damage / KO
+        ↓
+HUD / hand timing
+        ↓
+return to the correct control boundary
 ```
 
-When evidence is incomplete, the project uses explicit states such as **partial**, **pending evidence** or **not applicable** instead of inventing behaviour.
+The current P0 board starts with:
+
+- [#2 — Make GBC camera and shot choreography visible in production](https://github.com/smouj/dbzlsw-fangame/issues/2)
+- [#3 — Close remaining Golden Combat physical sequence gaps](https://github.com/smouj/dbzlsw-fangame/issues/3)
+- [#4 — Add deterministic full-battle E2E gates for 1v1 and 2v2](https://github.com/smouj/dbzlsw-fangame/issues/4)
+
+## Screenshots and visual progress
+
+Public screenshots are curated from the current development build. They must represent the actual application state and must not contain private debug overlays, local paths, credentials or internal workspace data.
+
+A public development screenshot and project description are available in the community announcement:
+
+- [Development preview on r/IndieGames](https://www.reddit.com/r/indiegames/comments/1vpzm0h/i_am_recreating_dragon_ball_z_legendary_super/)
+
+The repository-native screenshot gallery is being imported through the same public-source review used for the first application snapshot, so images are not copied blindly from private history. See [Screenshot policy](docs/SCREENSHOTS.md).
 
 ## Technology
 
-The active implementation is built around:
+The active implementation uses:
 
-- TypeScript
-- React
-- Vite
-- PixiJS
-- Vitest
-- Playwright
-- deterministic GBC-tick combat/runtime tooling
+- **TypeScript** — deterministic gameplay/runtime and tooling
+- **React** — application shell and accessible UI
+- **PixiJS** — battle presentation, actors, projectiles and cinematic viewport
+- **Vite** — development/build pipeline
+- **Vitest** — unit and contract verification
+- **Playwright** — browser/E2E verification
+- **GBC tick clock** — presentation and runtime timing derived from the original system model
 
-The public repository will expose a small set of contributor-facing commands while retaining detailed specialist verifiers underneath.
+The public contributor interface will remain small even when specialist verification grows underneath it.
 
-## Development model
+## Contributing
 
-The intended public workflow is:
+Contributions are welcome from developers, reverse engineers, testers, technical artists and documentation contributors.
+
+### Ways to help
+
+| Area | Useful contributions |
+|---|---|
+| Engine / gameplay | legality, deterministic state transitions, combat rules, AI |
+| Renderer | PixiJS camera, actor/target synchronization, projectile/FX lifecycle |
+| ROM research | reproducible derived findings, timing, handlers, sequence evidence |
+| QA | deterministic reproductions, browser E2E, viewport regressions |
+| Animation | physical frame provenance, sequence/tick validation |
+| Documentation | architecture, research notes, onboarding, diagrams |
+| Accessibility / UI | keyboard flow, responsive layouts, readable game UI |
+
+Start with [CONTRIBUTING.md](CONTRIBUTING.md), then check [open issues](https://github.com/smouj/dbzlsw-fangame/issues). Small, evidence-backed changes are preferred over broad speculative rewrites.
+
+### Public contribution workflow
 
 ```text
 fork
   ↓
-feature branch
-  ↓
-small, evidence-backed change
+focused branch
   ↓
 portable checks
   ↓
-pull request
+pull request + evidence
   ↓
 review
   ↓
 squash merge
 ```
 
-Before contributing, read:
+Until the sanitized application snapshot in issue #1 lands, this repository contains the public project contract, roadmap and governance rather than the complete runnable application tree. That status is deliberate and will be removed as soon as the public source gate is satisfied.
 
-- [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- [`docs/PUBLIC_SOURCE_POLICY.md`](docs/PUBLIC_SOURCE_POLICY.md)
-- [`docs/ROM_RESEARCH_POLICY.md`](docs/ROM_RESEARCH_POLICY.md)
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+## Community
+
+- **GitHub Issues** — bugs, actionable work and verified fidelity discrepancies
+- **GitHub Pull Requests** — implementation and documentation contributions
+- **Reddit** — [r/DBZ_LSW_FANGAME](https://www.reddit.com/r/DBZ_LSW_FANGAME/) for development updates and community discussion
+- **X / Twitter** — no account is linked until an official project handle is explicitly verified by the maintainer
+
+See [docs/COMMUNITY.md](docs/COMMUNITY.md) for routing and community rules.
 
 ## ROM and asset policy
 
-**This repository does not distribute the game ROM.** Contributors must not commit ROM images, save states, raw ROM dumps, proprietary audio dumps or other non-redistributable extracted material.
+**No game ROM is distributed by this repository.**
 
-Where local verification against an original game image is required, contributors provide their own legally obtained copy locally. Local extraction outputs must remain ignored/untracked unless a specific derived artefact has been reviewed and approved for public distribution.
+Do not commit:
 
-The public CI includes guardrails intended to catch common accidental publication paths.
+- `.gb`, `.gbc` or generic ROM images
+- save states / SRAM dumps
+- raw ROM dumps or extracted proprietary audio dumps
+- private workspace state or developer memory files
+- credentials, tokens, local machine paths or personal environment files
+- unreviewed extracted asset corpora
 
-## Areas where help is useful
+ROM-dependent local research uses a contributor's own legally obtained copy and keeps local/generated material untracked unless a specific derived artefact has been reviewed for public distribution.
 
-Contributions are particularly valuable in:
+See [Public Source Policy](docs/PUBLIC_SOURCE_POLICY.md) and [ROM Research Policy](docs/ROM_RESEARCH_POLICY.md).
 
-- GBC reverse engineering and emulator-assisted research
-- deterministic gameplay systems
-- PixiJS rendering and camera choreography
-- animation/frame provenance
-- projectile and FX synchronization
-- browser E2E testing
-- TypeScript architecture
-- technical documentation
-- reproducible ROM-fidelity evidence
+## Documentation
 
-Good contributions do not need to be large. A small, well-evidenced correction is preferable to a broad speculative rewrite.
-
-## Repository roles
-
-This public repository and the private research workspace intentionally serve different purposes:
-
-```text
-private research workspace
-raw evidence · local ROM work · internal audits
-                │
-                │ verified, redistributable knowledge
-                ▼
-         dbzlsw-fangame
-source · tests · docs · tooling · issues · pull requests
-```
-
-See [`docs/PUBLIC_SOURCE_POLICY.md`](docs/PUBLIC_SOURCE_POLICY.md) for the boundary in detail.
+| Document | Purpose |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Runtime/presentation authority and system boundaries |
+| [Project status](docs/PROJECT_STATUS.md) | Honest current development state |
+| [Roadmap](docs/ROADMAP.md) | Public priorities and sequencing |
+| [Fidelity](docs/FIDELITY.md) | Evidence levels and completion criteria |
+| [Development](docs/DEVELOPMENT.md) | Contributor environment and workflow |
+| [Community](docs/COMMUNITY.md) | Official channels and where to report what |
+| [Branding](docs/BRANDING.md) | Name, descriptions, topics and social preview |
+| [Screenshots](docs/SCREENSHOTS.md) | Public media curation rules |
+| [Public Source Policy](docs/PUBLIC_SOURCE_POLICY.md) | Public/private distribution boundary |
+| [ROM Research Policy](docs/ROM_RESEARCH_POLICY.md) | How ROM-derived claims are documented safely |
+| [Maintainer Setup](docs/MAINTAINER_SETUP.md) | GitHub metadata/ruleset baseline |
 
 ## Legal and project scope
 
 This is an **unofficial, non-commercial fan project**. It is not affiliated with, endorsed by, sponsored by or approved by the rights holders of _Dragon Ball_, _Dragon Ball Z_ or _Dragon Ball Z: Legendary Super Warriors_.
 
-The **MIT License applies only to original source code and documentation contributed under that license**. It does not grant rights to third-party trademarks, characters, artwork, music, ROM data or other copyrighted game assets.
+The [MIT License](LICENSE) applies only to original source code and documentation contributed under that license. It does **not** grant rights to third-party trademarks, characters, artwork, music, ROM data or other copyrighted game material.
 
-No game ROM is provided or required to browse this repository.
-
-## License
-
-Original project source code and documentation in this repository are licensed under the [MIT License](LICENSE), unless a file explicitly states otherwise.
-
-Third-party intellectual property remains the property of its respective owners.
+See [NOTICE.md](NOTICE.md) for the project notice.
