@@ -14,7 +14,7 @@
 
 **GBC-timed combat · deterministic runtime · ROM-backed research · PixiJS presentation · open contributions**
 
-[Roadmap](docs/ROADMAP.md) · [Project status](docs/PROJECT_STATUS.md) · [Contributing](CONTRIBUTING.md) · [Community](docs/COMMUNITY.md) · [Fidelity model](docs/FIDELITY.md)
+[Wiki](docs/wiki/README.md) · [Roadmap](docs/ROADMAP.md) · [Project status](docs/PROJECT_STATUS.md) · [Contributing](CONTRIBUTING.md) · [Community](docs/COMMUNITY.md) · [Fidelity model](docs/FIDELITY.md)
 
 </div>
 
@@ -180,6 +180,7 @@ See [Public Source Policy](docs/PUBLIC_SOURCE_POLICY.md) and [ROM Research Polic
 
 | Document | Purpose |
 |---|---|
+| [Game Wiki](docs/wiki/README.md) | Player-facing systems, battle rules, cards, characters, Stage, Story and research context |
 | [Architecture](docs/ARCHITECTURE.md) | Runtime/presentation authority and system boundaries |
 | [Project status](docs/PROJECT_STATUS.md) | Honest current development state |
 | [Roadmap](docs/ROADMAP.md) | Public priorities and sequencing |
