@@ -1,116 +1,184 @@
 # Battle System
 
-The battle system is the core of DBZ LSW Fangame. It combines turn structure, cards, character state, resources, tactical position and cinematic resolution.
+The battle system is the core of DBZ LSW Fangame. It combines the original game's phase structure, card grammar, resources, tactical position and action resolution with a deterministic modern runtime.
 
-## 1. Attack and Defense are separate phases
+This page separates two things deliberately:
 
-The game does not treat a round as one uninterrupted autoplay sequence.
+- **ROM/game contract** — behaviour demonstrated from the original game;
+- **fangame architecture** — how this project reproduces that behaviour safely and deterministically.
+
+## 1. Round structure
+
+A normal player-controlled round is built around two distinct decision phases:
 
 ```text
 ATTACK PHASE
-→ player chooses and resolves an action
-→ stop at the next decision boundary
+→ player chooses an attack-side command
+→ the accepted action resolves
+→ control stops at the next decision boundary
 
 DEFENSE PHASE
-→ player chooses how to answer the enemy attack
-→ enemy action resolves
-→ stop before the next round decision
+→ player chooses a response to the incoming enemy action
+→ the enemy action resolves with that defense context
+→ the round completes
+→ the next ATTACK decision begins
 ```
 
-The runtime owns those boundaries. Presentation may continue the movie of an already-accepted action, but it may not choose the next command.
+The fangame runtime owns those boundaries. Presentation may finish an already accepted action, but it may not invent the next command or advance the battle by itself.
 
-## 2. Core resources
+## 2. Top-level command menus
+
+The original battle command grammar is phase-dependent.
+
+### Attack Phase
+
+```text
+ATTACK
+├─ LIMIT
+├─ JOINT
+├─ BASIC
+└─ CHARA
+```
+
+### Defense Phase
+
+```text
+DEFENSE
+├─ LIMIT
+├─ JOINT
+└─ BASIC
+```
+
+`CHARA` is therefore an Attack-side top-level command, not a universal command shown identically in both phases.
+
+`BASIC` expands into phase-appropriate basic actions. In the fangame this includes the original families represented by Stage/Gather on the Attack side and Guard/Move-style responses on the Defense side, subject to runtime legality.
+
+## 3. Core resources
 
 ### HP
 
-Health. Reaching the terminal KO condition ends a 1v1 battle or advances team resolution in a multi-fighter battle.
+Health. Reaching the terminal KO condition ends a 1v1 battle or advances team resolution when a reserve fighter remains.
 
 ### Ki
 
-Energy used by relevant attacks/actions. Ki changes are part of gameplay state, never presentation state.
+Energy used by actions whose rules require it. Ki is authoritative gameplay state, never presentation state.
 
 ### CC
 
-Command/card currency. Actions and cards can require CC; payment is validated and applied by the battle authority.
+Command/card currency. The battle authority validates and pays CC costs before an action is committed.
 
-### Hand and deck
+### Deck and hand
 
-The battle model tracks the playable hand and deck progression. JOINT/card actions consume cards according to their rules; permanent/equipped LIMIT behaviour is modeled separately.
+Each side has a battle deck plus physical hand slots. JOINT uses the normal hand flow: the chosen card is paid for, removed from the hand and the hand is compacted according to the battle rules.
 
-## 3. Position
-
-Fighters can occupy tactical states that affect battle behaviour and presentation. The project tracks horizontal front/back state and relevant vertical state rather than treating every cinematic coordinate as gameplay position.
-
-This distinction matters:
-
-```text
-tactical position
-≠
-visual X/Y used during a cinematic
-```
-
-A rush, knockback or camera pan may move sprites visually without changing the authoritative tactical state unless the resolved action explicitly says so.
-
-## 4. Command groups
+## 4. LIMIT and JOINT are different storage systems
 
 ### LIMIT
 
-Uses a fighter's equipped Limit options. Availability depends on battle context and the required power/legality gates. LIMIT is not the same as playing a disposable hand card.
+The active member has **five equipped LIMIT slots**.
+
+A legal LIMIT action:
+
+- selects one of those equipped cards;
+- requires the active power-window state;
+- validates CC, compatibility and phase legality;
+- pays CC;
+- does **not** discard the equipped LIMIT card.
+
+LIMIT is therefore a reusable equipped-card source, not a second hand.
 
 ### JOINT
 
-Uses a card from the physical hand/deck flow. Validity, CC cost, compatibility and phase restrictions are resolved by the Engine.
+JOINT selects from the physical hand.
 
-### BASIC
+A legal JOINT action:
 
-Opens context-sensitive basic actions such as movement/guard/power-related actions and Stage behaviour depending on phase and state.
+- validates the selected hand card;
+- pays its cost;
+- consumes/removes that card from the hand;
+- compacts/advances the hand state as required.
 
-### CHARA
+## 5. Attack-side and Defense-side LIMIT legality
 
-Switches the active team member when the team state allows it. The logical switch and its visible entry/exit choreography are separate concerns: the runtime changes authority at the correct boundary while the presenter reproduces the transition.
+The same equipped LIMIT mechanism is used in both phases, but card-type legality differs by phase.
 
-## 5. Defense responses
+- **Attack:** Defense-category cards are rejected.
+- **Defense:** cards below Support/Defense categories are rejected; legal Support and Defense LIMIT cards can therefore be used when their own restrictions pass.
 
-Defense is not a passive animation. The player can select a legal response before the enemy action resolves. Depending on available state/cards this can include defensive cards, Support/LIMIT options, Guard or movement/evasion behaviour.
+This is important: Defense LIMIT is not a mysterious separate engine and is not restricted to Defense cards only.
 
-The exact result is resolved mechanically first and then presented visually.
+## 6. Tactical position vs cinematic coordinates
 
-## 6. Determinism
+The game tracks tactical position separately from visual coordinates used during an action movie.
 
-Given the same battle state, RNG state and command sequence, gameplay results and event ordering should be reproducible. Determinism is a project requirement because it enables:
+```text
+tactical state
+≠
+cinematic X/Y
+```
 
-- regression tests;
-- ROM comparison;
-- reliable replays/fixtures;
-- debugging of presentation without changing gameplay outcomes.
+The relevant tactical state includes horizontal FRONT/BACK and vertical states where applicable. A rush, camera pan or knockback can move a sprite without changing authoritative position unless the resolved action explicitly changes it.
 
-## 7. Gameplay vs presentation authority
+Stage is a clear example: horizontal position affects its timing/damage rules, while powered directional Stage results can also cause persistent tactical repositioning.
+
+## 7. CHARA and team state
+
+`CHARA` switches the active member when team state and command legality allow it.
+
+The project keeps two boundaries separate:
+
+```text
+logical team switch
+≠
+visible exit/entry choreography
+```
+
+The runtime commits the team state at the authoritative point; Presentation reproduces the ROM-derived exit/entry motion around that state change.
+
+## 8. Defense is an active decision
+
+Defense is not a passive animation after the enemy has already resolved its attack. The player chooses a legal response first. Depending on state and available cards, that response can come from:
+
+- LIMIT;
+- JOINT;
+- BASIC defensive actions such as Guard/Move;
+- Support or Defense cards when legal for the selected source.
+
+The battle authority resolves the mechanical result. Presentation then renders the corresponding guard, avoid, support/defense effect, impact branch and cleanup.
+
+## 9. Deterministic fangame authority
+
+The remake uses deterministic state/RNG plumbing so the same initial state, seed and command sequence can be reproduced for testing.
+
+That is an implementation property of this project. It should not be confused with a claim that every original GBC randomness source is literally identical to the remake's internal RNG implementation.
+
+## 10. Gameplay vs presentation authority
 
 The Engine/runtime owns:
 
-- legality;
+- command legality;
 - costs;
-- RNG;
-- hit/miss;
+- gameplay RNG/result inputs;
+- hit/miss and defense outcome;
 - damage;
 - HP/Ki/CC;
 - phase/exchange progression;
-- QTE result;
+- Stage/QTE gameplay result;
 - KO;
 - authoritative tactical state.
 
 The presentation layer owns:
 
 - shot/background;
-- sprite visibility;
-- physical frame/pose;
-- movement shown on screen;
-- FX/projectiles;
+- fighter visibility;
+- physical frame/sequence playback;
+- cinematic motion;
+- FX/projectiles/BG effects;
 - camera/screen motion;
 - impact timing and cleanup;
 - audio requests.
 
-For the formal architecture, see [Architecture](../ARCHITECTURE.md).
+For the formal implementation boundary, see [Architecture](../ARCHITECTURE.md).
 
 ---
 
