@@ -1,86 +1,169 @@
 # Stage Attacks
 
-Stage Attacks are command-input actions built around a short preparation phase followed by a timed input window and a cinematic resolution.
-
-They are one of the most distinctive systems in _Legendary Super Warriors_ and are treated as a dedicated gameplay family rather than as normal Beam cards.
+Stage Attacks are a dedicated command family with preparation, a timed input sequence and a ROM-defined cinematic/gameplay resolution. They are not normal Beam cards and should not be documented as a generic QTE overlay.
 
 ## The four Stage cards
 
-The game has four Stage command cards:
+The ROM card table contains four Stage command cards:
 
-| Card | Required inputs |
-|---|---:|
-| 3 Stage Attack | 3 |
-| 4 Stage Attack | 4 |
-| 5 Stage Attack | 5 |
-| 6 Stage Attack | 6 |
+| Card | Commands | Maximum CC from successful inputs |
+|---|---:|---:|
+| 3 Stage Attack | 3 | 3 |
+| 4 Stage Attack | 4 | 4 |
+| 5 Stage Attack | 5 | 5 |
+| 6 Stage Attack | 6 | 6 |
 
-The input count is part of the selected Stage card. The runtime must not generate a fixed 10- or 16-input sequence for every Stage action.
+The selected card determines the number of expected commands. The ROM has larger working buffers, but that does **not** mean every Stage action uses 10 or 16 inputs.
 
 ## Stage flow
 
-A Stage action is expected to follow this structure:
+The project targets this structure:
 
 ```text
 ATTACK PHASE
-→ choose BASIC / Stage route
-→ preparation movie
-→ input window opens
-→ timed command sequence
-→ Stage result
-→ resolution choreography
-→ impact / counter / repositioning as applicable
+→ BASIC / Stage selection
+→ Stage preparation
+→ QTE/input window opens
+→ exactly 3/4/5/6 expected commands
+→ result / correction branch where applicable
+→ Stage command choreography
+→ target reaction / impact
+→ damage + tactical consequences
 → cleanup
 → FIELD
-→ next control boundary
+→ next player-control boundary
 ```
 
-The input UI must not appear before preparation is complete.
+The input UI must not appear before the Stage input state actually begins.
 
-## Input semantics
+## Accepted commands
 
-The input window uses a **single global deadline** for the Stage attempt. It is not a fresh timer for every individual button.
+The Stage command set uses:
 
-For each expected command:
+```text
+RIGHT
+UP
+DOWN
+A
+B
+```
 
-- a correct input records success and advances to the next command;
-- a wrong input records failure for that command **and still advances**;
-- repair/correction behaviour, where supported by the active runtime contract, must preserve the original global deadline rather than restarting the timer.
+For the main sequence, the ROM stores the expected commands and a result for each command index.
 
-This distinction is important because a UI that resets time after every button makes Stage substantially easier than the original system.
+A correct input:
 
-## Position and timing
+```text
+result[index] = success
+index++
+```
 
-Stage timing depends on battle context, including attacker/defender positional state. The project stores and verifies this in **GBC ticks** rather than generic browser milliseconds.
+A wrong input:
 
-Exact currently verified timing matrices belong to generated/runtime verification data and may evolve as evidence is promoted. The wiki therefore documents the stable rule:
+```text
+result[index] = failure
+index++
+```
 
-> Stage uses a position-dependent, single global GBC-tick input window.
+The wrong button is therefore not ignored while the game waits for the originally expected button.
 
-## Success, failure and counterplay
+## One global timer
 
-A Stage action is not merely a visual QTE overlay. Its result feeds the normal battle authority and can affect the final resolution, including failed-input/counter behaviour and position changes associated with the action.
+The Stage sequence uses a **single global input window**, not a fresh timer for every command.
 
-Presentation then reproduces the appropriate preparation, rush, impact and cleanup without independently deciding the gameplay result.
+The position-dependent ROM matrix is:
 
-## Power interaction
+| Attacker | Defender | Window |
+|---|---|---:|
+| FRONT | FRONT | **150 GBC ticks** |
+| FRONT | BACK | **120 GBC ticks** |
+| BACK | FRONT | **80 GBC ticks** |
+| BACK | BACK | **50 GBC ticks** |
 
-Power-state Stage inputs can interact with defender positioning for directional commands. These changes are resolved as battle state, then reflected visually.
+At the GBC cadence these are approximately:
+
+```text
+150t ≈ 2.511 s
+120t ≈ 2.009 s
+ 80t ≈ 1.339 s
+ 50t ≈ 0.837 s
+```
+
+These values supersede older provisional timings such as `1.2 / 1.7 / 2.4 / 2.9` seconds.
+
+Correct and incorrect commands advance the command index while this original global deadline continues.
+
+## Error correction / cash-out subwindow
+
+After a Stage input error, the original game exposes an additional A/B decision window with ROM thresholds at **10, 25 and 30 ticks**.
+
+The currently established behaviour is:
+
+- **B / FIX** — the strict branch, associated with attempting to repair the error and continue;
+- **A / BANK** — the wider branch, associated with ending the chain while keeping the CC earned so far;
+- **timeout** — failure when the correction window expires.
+
+The numeric thresholds are ROM-derived. The human labels are retained because they match documented original-game behaviour, but research notes should still distinguish literal ROM state from descriptive naming.
+
+Critically, a repair attempt does **not** restart the original Stage global deadline.
+
+## Stage scoring and damage
+
+Successful commands feed the Stage result/CC accumulation, but Stage damage is not simply “number of correct buttons.”
+
+The ROM also derives a base combat component and reduces it according to horizontal position:
+
+```text
+FRONT / FRONT → base
+BACK  / FRONT → base / 2
+FRONT / BACK  → base / 2
+BACK  / BACK  → base / 4
+```
+
+So FRONT/BACK influences both Stage input difficulty and the numerical Stage result.
+
+## Powered directional repositioning
+
+When the relevant powered Stage state is active, successful directional commands can persistently change the defender's tactical position:
+
+```text
+RIGHT → force BACK
+UP    → force AIR
+DOWN  → force GROUND
+A/B   → no tactical-position change
+```
+
+This tactical change must remain distinct from ordinary visual knockback.
+
+## ROM physical command choreography
+
+Stage actor commands use physical resources from Stage animation Bank `$61`.
+
+| Command | Resource | Sequence selection | Actor duration |
+|---|---:|---|---:|
+| A | 1 | by actor visual profile | 4 frames / 13t |
+| B | 2 | by actor visual profile | 6 frames / 32t |
+| RIGHT | 3 | by actor visual profile | 7 frames / 41t |
+| UP | 4 | by actor visual profile | 7 frames / 41t |
+| DOWN | 4 | fixed sequence 9 | 9 frames / 53t |
+
+The target reaction is also synchronized to specific actor frames and uses dedicated target sequences. The remake should therefore not reduce all Stage commands to one shared `attack → hurt → fixed delay` movie.
+
+Some Stage physical-texture/corpus work can still be pending even when the ROM sequence/timing contract itself is known. The project must preserve that distinction honestly.
 
 ## Fidelity requirements
 
-A Stage implementation is not considered complete simply because the input buttons work. The project tracks:
+A Stage implementation is only complete when the applicable evidence reaches production end-to-end:
 
-- correct input count;
-- global deadline;
+- 3/4/5/6 command count;
+- global 150/120/80/50-tick timer;
 - wrong-input progression;
-- result/counter semantics;
-- physical Stage animation resources;
-- actor/target sequencing;
-- movement and impact timings;
-- repositioning;
-- cleanup;
-- return to the next player-choice boundary.
+- A/B correction semantics without timer reset;
+- partial CC/result handling;
+- ROM-selected command variant/sequence;
+- actor/target physical timing;
+- Stage damage/position rules;
+- impact/reaction/cleanup;
+- return to the correct next player-choice boundary.
 
 ---
 

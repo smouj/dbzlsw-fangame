@@ -1,96 +1,128 @@
 # Gameplay
 
-DBZ LSW Fangame is built around **decision → resolution → next decision**. The player is expected to remain in control at the boundaries where the original game asks for a choice; presentation must never silently advance the match on its own.
+DBZ LSW Fangame is built around **decision → resolution → next decision**. The player must regain control at the same class of boundaries where the original game expects a choice; presentation is not allowed to silently continue the match on its own.
 
 ## Core round flow
 
-A normal round is structured around two distinct phases:
+A normal player-controlled round is structured around two distinct phases:
 
 ```text
 ROUND
 │
 ├─ ATTACK PHASE
-│  ├─ choose an offensive/action command
-│  ├─ resolve preparation and action
-│  └─ finish the player's action
+│  ├─ choose LIMIT / JOINT / BASIC / CHARA
+│  ├─ resolve the accepted action
+│  └─ stop at the next decision boundary
 │
 ├─ DEFENSE PHASE
-│  ├─ choose a defensive response
-│  ├─ resolve the enemy action with that response
-│  └─ finish the enemy action
+│  ├─ choose LIMIT / JOINT / BASIC response
+│  ├─ resolve the incoming enemy action
+│  └─ complete the round
 │
 └─ NEXT ROUND
 ```
 
-When the runtime reaches a player-choice boundary, the game must be able to wait indefinitely. No UI timeout, cinematic completion callback or React effect is allowed to invent the next gameplay command.
+When the runtime reaches a player-choice boundary, the game can wait indefinitely. A UI timer, cinematic callback or React effect must never invent the next gameplay command.
 
 ## What the player manages
 
-During battle, the player manages several connected systems:
+During battle, the player manages connected systems including:
 
 - **HP** — fighter health;
-- **Ki** — energy used by relevant actions;
-- **CC** — card/command resource;
-- **hand/deck** — playable cards and draw state;
-- **position** — front/back and vertical tactical state where applicable;
-- **power window** — temporary state that can enable or alter certain actions;
-- **active member / reserve** — in team battles;
-- **Attack vs Defense context** — which commands are currently legal.
+- **Ki** — energy used by applicable actions;
+- **CC** — command/card currency;
+- **hand/deck** — JOINT card flow;
+- **five equipped LIMIT slots per member**;
+- **tactical position** — FRONT/BACK and relevant vertical state;
+- **power-window state** — required for LIMIT and used by other power-related rules;
+- **active member/reserve** — in team battles;
+- **Attack vs Defense phase** — changes command/card legality.
 
-## Main action families
+## Command grammar
 
-The battle UI exposes the original game's command grammar rather than one generic "attack" button. Depending on phase and context, actions include:
+The original top-level menus are phase-specific.
 
-- **LIMIT**
-- **JOINT**
-- **BASIC**
-- **CHARA**
-- **GUARD**
-- **MOVE**
-- **GATHER**
-- **STAGE**
-- **POWER**
-- card-based attacks, Beam, Support and Defense actions
+### Attack
 
-Not every option is legal in every phase. The Engine/runtime is the authority for legality and cost.
+```text
+LIMIT
+JOINT
+BASIC
+CHARA
+```
+
+### Defense
+
+```text
+LIMIT
+JOINT
+BASIC
+```
+
+`BASIC` contains phase-appropriate basic actions rather than being one universal attack button. The fangame maps these into the original action families, including Stage/Gather-style Attack actions and Guard/Move-style Defense responses where legal.
+
+## Cards are selected from two different sources
+
+### LIMIT
+
+LIMIT uses one of the active member's equipped reusable cards and requires the power-window state.
+
+### JOINT
+
+JOINT uses the physical hand. The selected card is consumed/removed from that hand after a valid committed use.
+
+This distinction is part of gameplay, not merely UI organization.
+
+## Stage gameplay
+
+Stage is a dedicated command-input family. The selected 3/4/5/6 Stage card determines the exact number of expected commands, and the input sequence runs under one position-dependent global GBC-tick deadline.
+
+See [Stage Attacks](STAGE_ATTACKS.md) for the ROM-verified timing matrix and correction behaviour.
 
 ## Cinematic flow
 
 Gameplay and cinematography are deliberately separated.
 
-A resolved action can move through several visual states:
+A resolved action may move through visual states such as:
 
 ```text
-FIELD
-→ action preparation
+FIELD / tactical view
+→ transition/preparation
 → ACTION shot
-→ actor animation
-→ projectile / movement / FX
-→ impact / defense reaction
+→ actor sequence
+→ motion / projectile / FX
+→ target reaction / impact
 → cleanup
 → FIELD
 → next control boundary
 ```
 
-The visible movie must follow the authoritative battle result; it does not decide hit/miss, damage, resources, KO or the next phase.
+The visible movie follows the authoritative result; it does not decide hit/miss, damage, resources, tactical state, KO or the next phase.
 
 ## Match formats
 
-The project supports the battle architecture needed for:
+The active battle model supports:
 
-- **1v1** fights;
-- **2v2** team fights;
-- active/reserve character switching;
-- KO-driven team progression;
-- deterministic rematches and repeated testing.
+- **1v1**;
+- **2v2**;
+- active/reserve switching;
+- reserve continuation after KO;
+- deterministic rematches/testing.
 
-The exact public UI surface may evolve during alpha, but these formats are part of the active battle model.
+The public setup UI can evolve during alpha without changing these battle-state contracts.
+
+## Determinism and ROM fidelity
+
+The fangame uses deterministic runtime/RNG plumbing so tests and reproductions are stable.
+
+That should not be read as “the remake's internal RNG algorithm is automatically identical to every original GBC randomness source.” When exact ROM random/timing provenance is relevant, it is tracked as a separate fidelity question.
 
 ## Where to go next
 
-- Learn the detailed rules in [Battle System](BATTLE_SYSTEM.md).
-- Learn how the 125-card system is organized in [Cards](CARDS.md).
-- Learn Stage input behaviour in [Stage Attacks](STAGE_ATTACKS.md).
+- [Battle System](BATTLE_SYSTEM.md) — command legality, resources, position and authority.
+- [Cards](CARDS.md) — the 125-card ROM data model.
+- [Stage Attacks](STAGE_ATTACKS.md) — exact Stage command/timing contract.
+- [Fidelity & ROM Research](FIDELITY_AND_RESEARCH.md) — what counts as demonstrated.
 
 ---
 

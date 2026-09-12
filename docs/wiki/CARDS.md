@@ -1,93 +1,138 @@
 # Cards
 
-Cards are one of the defining systems of _Legendary Super Warriors_. The project models the complete **125-card** set as gameplay data rather than treating card names as hard-coded UI actions.
+Cards are one of the defining systems of _Dragon Ball Z: Legendary Super Warriors_. The project models the complete **125-card ROM table** as structured gameplay data rather than as hard-coded UI actions.
 
-## Card families
+## ROM card families
 
-The ROM card table divides the 125 entries into the following broad gameplay groups:
+The 125 entries are divided into these broad categories:
 
 | Family | Count | Role |
 |---|---:|---|
 | Command / Stage | 4 | 3/4/5/6 Stage command cards |
-| Damage | 24 | Physical/direct-damage actions |
-| Beam | 38 | Energy/projectile attacks |
+| Damage | 24 | Physical/direct-damage actions, including special handlers |
+| Beam | 38 | Energy/projectile attack families |
 | Support | 48 | Buffs, state changes and support effects |
 | Defense | 11 | Defensive responses |
 | **Total** | **125** | |
 
-The project keeps the original card record semantics separate from presentation. A Beam card, for example, can have:
+These are card-table categories. They are not the same thing as runtime presentation families: two cards can share a category while using different handlers, animation resources or visual programs.
+
+## ROM card record
+
+The project treats each card as a structured record that can contain, among other fields:
 
 ```text
-card data
-├─ power / accuracy / CC cost
-├─ compatibility
-├─ execution handler
-├─ actor animation resource
-├─ FX resource
-└─ palette / presentation dependencies
+category
+power
+accuracy
+internal card id
+CC cost
+execution handler
+actor AnimationResource
+FX resource
+palette
+fighter/form compatibility mask
+metadata
 ```
 
-## Playing cards
+The execution handler must always be interpreted in its proper category/context. Handler byte values are not assumed to have one universal meaning across all card categories.
 
-A card is not legal merely because it exists in the hand. The runtime validates the relevant context, including:
+## Playing a card
 
-- current phase;
+A card is not legal merely because it exists in a hand or equipped LIMIT slot. The battle authority validates the applicable rules, including:
+
+- current Attack/Defense phase;
 - fighter/form compatibility;
-- resource cost;
-- command family;
-- temporary battle state;
-- any action-specific restrictions.
+- CC/resource cost;
+- card category;
+- active temporary state;
+- action-specific restrictions.
 
-If the command is legal, the Engine applies gameplay state changes and emits events. Presentation then turns those events and ROM-backed descriptors into the visible action.
+If legal, the Engine/runtime commits gameplay first and emits deterministic events. Presentation then renders the ROM-backed action path available for that card.
 
 ## LIMIT vs JOINT
 
-These two systems are intentionally distinct.
+The original game uses two distinct card sources.
 
 ### LIMIT
 
-LIMIT actions come from the active fighter's equipped Limit loadout. They are persistent options rather than cards discarded from the current hand after use.
+Each active fighter has **five equipped LIMIT slots**.
 
-Availability is controlled by the relevant power/context gates and normal legality checks.
+LIMIT:
+
+- selects an equipped card;
+- requires the power-window state;
+- pays CC;
+- validates normal compatibility/phase restrictions;
+- does **not** consume the equipped card after use.
 
 ### JOINT
 
-JOINT uses the normal hand/deck flow. When a playable card is consumed, the hand/deck state advances according to the battle rules.
+JOINT selects a card from the **physical hand**.
+
+JOINT:
+
+- pays the card cost;
+- consumes/removes the selected hand card;
+- compacts the hand/deck flow afterward.
+
+So LIMIT is reusable equipped access; JOINT is consumable hand access.
+
+## Phase legality
+
+Card category legality is phase-dependent.
+
+### Attack
+
+Defense-category cards are not legal Attack selections.
+
+### Defense
+
+Defense-side LIMIT/JOINT legality accepts the appropriate **Support** and **Defense** categories when their individual restrictions pass. Defense LIMIT is therefore not equivalent to “Defense cards only.”
 
 ## Support and Defense
 
-Support and Defense are not visual-only categories. Their effects can influence battle state, legal responses and the way an incoming action resolves.
+Support and Defense are gameplay categories, not visual-only effects. They can alter state, legal responses and the resolution of an incoming action.
 
-The project therefore keeps two layers explicit:
+The project preserves this separation:
 
 ```text
-mechanical effect
-        ↓
-BattleEventLog
-        ↓
-visual response / ROM presentation
+card selection
+→ mechanical resolution
+→ EventLog/result
+→ ROM presentation branch
+→ visible response
 ```
 
-This prevents a visual branch from becoming an accidental source of gameplay truth.
+Visual code must not invent the mechanical meaning of a Support/Defense result.
 
-## Card fidelity
+## Execution and presentation fidelity
 
-The project tracks cards at more than one level:
+For every card, the project may need to reconcile several layers:
 
-1. data/compatibility;
-2. mechanical execution;
-3. result branch;
-4. animation resource;
-5. physical frame sequence;
-6. FX/palette;
-7. presentation timeline;
-8. production renderer consumption.
+1. ROM card record;
+2. category + execution handler;
+3. legality and mechanical result;
+4. actor AnimationResource / selected sequence;
+5. FX resource and palette;
+6. result branch;
+7. presentation program/timing;
+8. physical frame/FX linkage;
+9. production renderer consumption.
 
-A card is not called fully faithful merely because damage is correct. See [Fidelity & ROM Research](FIDELITY_AND_RESEARCH.md).
+A card is not considered fully faithful simply because its final damage is correct.
+
+## Important distinction: category vs handler vs visual family
+
+Do not reduce the card system to labels such as “Beam = one animation.” The ROM can route cards through shared execution skeletons, specialized workers, category-specific handlers and card-specific resources.
+
+For public documentation, claims should therefore identify the scope precisely: data, mechanic, handler, physical sequence, presentation or browser-visible output.
+
+See [Fidelity & ROM Research](FIDELITY_AND_RESEARCH.md).
 
 ## Card catalogue
 
-A complete public card-by-card catalogue is intended to live under this wiki once the public-source snapshot exposes the relevant sanitized data directly. Until then, this page documents the stable system contract rather than duplicating private/raw research tables.
+A full card-by-card public catalogue should be generated from sanitized canonical data so counts, handlers, compatibility and evidence state cannot drift from the implementation. Until that dataset is published, this page documents the stable ROM/project contract rather than duplicating private/raw extraction tables manually.
 
 ---
 
