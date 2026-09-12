@@ -1,78 +1,117 @@
 # Story Mode
 
-The project's Story mode is designed as a **scene-driven battle campaign**, not as a free-roaming RPG layer.
+Story mode in DBZ LSW Fangame is a **deliberate project adaptation** of the original game's campaign structure.
 
-## Canonical story structure
+It is important not to confuse two statements:
 
-The intended loop is:
+1. the original GBC game contains exploration/system layers beyond battles;
+2. this fangame intentionally presents Story as a streamlined scene-driven campaign rather than reproducing every RPG/navigation interaction one-for-one.
+
+The wiki should never imply that the original ROM lacked those systems simply because this project does not reproduce them directly.
+
+## Fangame story contract
+
+The intended project loop is:
 
 ```text
 scene / panel
 → dialogue
 → transition
 → battle
-→ resolution
+→ battle result
 → next scene / chapter
 ```
 
-The original game's guides and ROM research are useful for determining what happens, who participates, the order of events and the battle context. They are **not** a requirement to reproduce every exploration or object-interaction layer as a modern RPG system.
+This is the canonical **fangame** Story flow.
+
+## What is taken from the original game
+
+ROM research, original-game data and reliable guides are used to establish things such as:
+
+- story ordering;
+- participating characters/forms;
+- battle matchups;
+- important dialogue/events;
+- chapter context;
+- unlock/progression facts when verified;
+- story-significant objects or events.
+
+Those sources determine **what happens** in the original campaign.
+
+## What the fangame intentionally changes
+
+The current project does not require a one-for-one recreation of the original exploration layer.
+
+The modern Story presentation may omit or abstract:
+
+- freely navigable RPG maps;
+- exploration hotspots;
+- field pickups/containers;
+- cards represented as map collectibles;
+- navigation interactions that do not contribute to the project's scene-driven flow.
+
+That is a **design choice of this fangame**, not a claim about what existed in _Legendary Super Warriors_.
 
 ## What Story mode includes
 
 The project can use:
 
-- scene backgrounds;
-- character portraits;
+- scene backgrounds/panels;
+- character portraits and expressions;
 - dialogue;
 - chapter transitions;
-- battle setup derived from the story context;
+- story-derived battle setup;
 - post-battle resolution;
-- story-significant objects/events where they matter narratively.
+- story-significant items/events when narratively relevant.
 
-## What Story mode does not require
+A story object such as a Dragon Ball, the Time Machine or the Z Sword may still appear because it matters to the narrative even if it is not implemented as a free-roaming pickup mechanic.
 
-The current design does not depend on:
+## Story and Battle remain separate authorities
 
-- a freely navigable RPG overworld;
-- exploration hotspots;
-- loot containers or field pickups;
-- cards placed as collectible map objects;
-- route-choice systems that are not part of the intended remake flow;
-- unrelated RPG mechanics added simply because they existed in a walkthrough context.
-
-This keeps the campaign focused on the narrative and battle system that define the project.
-
-## Story and battle are separate systems
-
-Story prepares a battle configuration; it does not become a second battle engine.
+Story creates context and battle configuration; it does not become a second combat engine.
 
 ```text
 Story chapter
-→ battle config
+→ participants / encounter context
+→ BattleConfig
 → BattleRuntime / Engine
-→ battle result
+→ battle outcome
 → Story progression
 ```
 
-The Story layer may choose participants, context and presentation around a fight, but combat legality, damage, resources, Stage outcomes and KO remain owned by the battle system.
+Story may choose who fights, why the fight occurs and what scene follows. It must not independently calculate card legality, damage, Stage results, CC/Ki, defense semantics or KO.
 
-## Current priority
+## Fidelity policy for Story
 
-Story is part of the project, but active development prioritizes **playable, repeatable, ROM-faithful battles** before broad story-content completion.
+Story documentation should distinguish three categories explicitly:
 
-For the latest priority order, see [Roadmap](../ROADMAP.md) and [Project Status](../PROJECT_STATUS.md).
+- **ORIGINAL-GAME FACT** — demonstrated by ROM/data or a reliable source;
+- **FANGAME ADAPTATION** — intentional presentation/design choice of this project;
+- **UNRESOLVED** — not yet sufficiently verified.
+
+This prevents an adaptation decision from being accidentally documented as original GBC behaviour.
+
+## Current project priority
+
+Story remains part of the project, but current development prioritizes **playable, repeatable and visually faithful battles** before broad Story content completion.
+
+For changing priorities, see:
+
+- [Project Status](../PROJECT_STATUS.md)
+- [Roadmap](../ROADMAP.md)
 
 ## Future wiki expansion
 
-As public-safe chapter data is stabilized, this wiki can expand into:
+Once the public-safe chapter dataset is ready, Story documentation should expand into generated/reviewed pages covering:
 
 - chapter index;
-- battle-by-battle roster;
-- story scene summaries;
-- unlock/progression notes;
-- verified differences between the original game and the fangame presentation.
+- scene summaries;
+- battle-by-battle participants;
+- unlock/progression data;
+- original-game facts vs fangame adaptations;
+- known unresolved points.
 
-Those pages should be generated or reviewed against the canonical story data rather than copied from old walkthrough assumptions.
+Those pages should be sourced from canonical project data and evidence, not copied blindly from walkthrough assumptions.
 
 ---
 
