@@ -1,97 +1,143 @@
 # Fidelity & ROM Research
 
-DBZ LSW Fangame treats fidelity as an evidence problem, not as a marketing label.
+DBZ LSW Fangame treats fidelity as an **evidence chain**, not as a marketing label.
 
-A mechanic can be mechanically correct while its visible choreography is still incomplete. Likewise, a physical frame can be extracted correctly without proving when the original game uses it.
+A mechanic can be mechanically correct while its visible choreography is still incomplete. A physical frame can be reconstructed correctly without proving when the original game uses it. A ROM descriptor can be decoded correctly while production still renders a legacy approximation.
 
-## Evidence layers
+Those are different completion states and must stay separate.
 
-The project separates several layers that are easy to confuse:
+## Evidence chain
 
-1. **ROM data exists** — a table, handler, resource or byte sequence has been located.
-2. **Mechanical meaning is understood** — the gameplay rule has been demonstrated.
-3. **Presentation program is understood** — timing, branches, movement or FX are decoded.
-4. **Physical resource is linked** — frame/FX/palette identity is demonstrated.
-5. **Runtime consumes it** — production uses the ROM-backed path.
-6. **Browser-visible output matches** — the final battle view reproduces the intended result.
+The project tracks several layers that are easy to confuse:
 
-A claim should never jump directly from layer 1 to layer 6.
+1. **ROM data located** — table, handler, resource, pointer or byte sequence identified;
+2. **mechanical meaning demonstrated** — the gameplay rule and its consumers are understood;
+3. **presentation program decoded** — waits, branches, motion, sequence selection, FX or screen operations understood;
+4. **physical resource linked** — fighter frame, metasprite, FX or palette identity demonstrated;
+5. **runtime consumes it** — production uses the ROM-backed mechanic/presentation path;
+6. **browser-visible output validated** — final BattleScreen behaviour matches the scoped evidence.
 
-## Public evidence vocabulary
+A claim must not jump directly from layer 1 to layer 6.
 
-The canonical status language is defined in [Fidelity](../FIDELITY.md). In short:
+## Public completion vocabulary
 
-- **PASS** — the scoped claim is demonstrated by its required gate/evidence;
+The canonical public status terms are defined in [Fidelity](../FIDELITY.md):
+
+- **PASS** — the scoped claim is demonstrated by the required evidence/gate;
 - **PARTIAL** — useful implementation/evidence exists, but a known part remains unresolved;
-- **BLOCKED** — the required path or evidence is unavailable;
-- **PENDING EVIDENCE** — the project deliberately refuses to invent the missing behaviour;
+- **BLOCKED** — a required path or evidence source is unavailable;
+- **PENDING EVIDENCE** — behaviour is deliberately left unresolved rather than invented;
 - **N/A** — the original behaviour does not apply.
 
-Research-specific notes can additionally distinguish static vs dynamic evidence where useful.
+These are project-facing completion terms.
+
+## Research evidence labels
+
+ROM research can additionally use more precise provenance labels when useful:
+
+- **ROM_STATIC_VERIFIED** — demonstrated from static ROM/code/data analysis;
+- **ROM_HANDLER_VERIFIED** — demonstrated from a specific handler/worker/control-flow path;
+- **ROM_DYNAMIC_VERIFIED** — demonstrated by reproducible live execution/trace evidence;
+- **PENDING_ROM_TRACE** — static evidence is insufficient and dynamic capture is required;
+- **INFERRED / HYPOTHESIS** — useful working interpretation that must not be presented as established ROM fact.
+
+A human-readable interpretation can be useful while still carrying a weaker provenance label than the underlying numeric/byte fact.
 
 ## Static vs dynamic ROM research
 
-### Static research
+### Static research can establish
 
-Static research can establish things such as:
+Examples include:
 
-- card records;
-- handler dispatch;
-- animation-resource descriptors;
+- the 125-card table and card fields;
+- category + handler dispatch;
+- AnimationResource descriptors;
 - sequence/frame tables;
-- durations and offsets encoded in data;
-- palette/graphics pointers;
-- literal presentation programs;
-- known state-machine branches.
+- duration ticks and encoded offsets;
+- graphics/palette pointers;
+- literal presentation VM programs;
+- state-machine branches;
+- resource/sequence selection tables;
+- many Support/Defense/Stage rules.
 
-### Dynamic research
+### Dynamic research is still needed for some questions
 
-Some questions require observing the game while it runs, for example:
+Examples include:
 
-- semantic actor/target binding for special multi-object cases;
-- runtime-selected branches that cannot be proven from static data alone;
-- spatial anchors/coordinates whose meaning depends on live context;
-- exact multi-actor ownership in special handlers.
+- semantic actor/target binding in special multi-object cases;
+- universal spatial anchors such as actor/target/contact positions when static code does not prove their semantic role;
+- absolute multi-actor geometry;
+- execution-dependent ownership/branch meaning that cannot be closed statically.
 
 Those items stay pending until a reproducible trace exists.
 
-## Physical frame provenance
+## Physical fighter provenance
 
 The project does not equate a runtime pose label with an original physical frame.
 
-A useful mental model is:
+The ROM-side chain is conceptually:
 
 ```text
-ROM AnimationResource
-→ sequence
-→ frame index
-→ visual frame
-→ metasprite / graphics / palette
-→ physical image
-
-runtime semantic pose
-→ may reference that physical image
-→ or a composite/fallback when no direct physical equivalent is demonstrated
+ROM form identity
+→ actor visual profile
+→ graphics bank + palette
+→ AnimationResource
+→ selected sequence
+→ frame index / visual frame
+→ metasprite
+→ graphics blocks / tiles
+→ physical fighter image
 ```
 
-This is why a 100% runtime pose-resolution metric is not the same as 100% physical-pose coverage.
+The runtime may then map that physical image into a semantic pose/action.
+
+Therefore:
+
+```text
+runtime pose coverage = 100%
+```
+
+would still **not** prove:
+
+```text
+physical ROM pose coverage = 100%
+```
+
+if fallbacks/composites remain.
+
+## Gameplay fidelity vs implementation determinism
+
+The fangame uses deterministic state and RNG plumbing for reproducible tests.
+
+That is a project architecture choice. It is not automatically evidence that every original GBC randomness source is implemented with the same internal algorithm. Where the ROM uses a specific counter/sample or timing source, exact parity must be demonstrated separately.
 
 ## ROM → runtime → screen
 
-The target fidelity chain is:
+The desired end-to-end chain is:
 
 ```text
 ROM evidence
-→ sanitized public descriptor
-→ BattleRuntime / EventLog
-→ presentation compiler
+→ sanitized canonical descriptor/data
+→ BattleRuntime / Engine
+→ EventLog
+→ ROM-derived presentation profile/compiler
 → BattleTimeline
 → Pixi cue consumption
-→ physical frame / FX / camera
+→ physical frame / FX / camera / screen motion
 → browser-visible battle
 ```
 
-The main fidelity work in alpha is closing gaps in this chain, not merely increasing the amount of reverse-engineering documentation.
+The active fidelity problem is often not “we know nothing about the ROM,” but “the evidence exists and production has not consumed all of it yet.”
+
+## Project adaptation vs original-game fact
+
+Documentation must explicitly distinguish:
+
+- what the original game demonstrably does;
+- what the fangame deliberately modernizes/adapts;
+- what remains unresolved.
+
+Story mode is an example: the project intentionally streamlines the original campaign into a scene-driven flow, but that must not be rewritten as a claim that the GBC game never contained exploration/navigation systems.
 
 ## Public-source boundary
 
@@ -99,13 +145,13 @@ This repository does not distribute a ROM, save state, SRAM dump or raw propriet
 
 Public research should prefer:
 
-- addresses/identifiers where appropriate;
 - derived metadata;
+- scoped addresses/identifiers where appropriate;
 - reproducible tooling;
 - hashes/checksums;
-- tests;
+- tests/verifiers;
 - diagrams;
-- small public-safe evidence summaries.
+- public-safe evidence summaries.
 
 See:
 
@@ -113,18 +159,19 @@ See:
 - [Public Source Policy](../PUBLIC_SOURCE_POLICY.md)
 - [Publication Checklist](../PUBLICATION_CHECKLIST.md)
 
-## How to report a fidelity discrepancy
+## Reporting a fidelity discrepancy
 
-A useful report should identify:
+A useful report identifies:
 
 - action/card;
 - player/enemy side;
-- expected original behaviour;
+- original expected behaviour and evidence source;
 - observed fangame behaviour;
-- deterministic reproduction steps if possible;
-- whether the discrepancy is mechanical, visual, timing, physical-frame, camera/shot, FX or cleanup related.
+- deterministic reproduction steps when possible;
+- discrepancy type: mechanic, timing, physical frame, actor/target choreography, camera/screen, FX, HUD or cleanup;
+- whether the claim is static, dynamic or still inferred.
 
-Avoid opening an issue that only says “it feels wrong.” Precise evidence makes the issue actionable.
+“Feels wrong” is a useful starting observation, but a reproducible scoped difference is what makes the issue actionable.
 
 ---
 
