@@ -1,75 +1,125 @@
 # Characters
 
-Characters are represented by a fighter identity plus a specific **form**. The project treats form identity as gameplay data, not as a cosmetic skin.
+Characters are represented by a fighter identity plus a specific **form**. In both the ROM research and the fangame, form identity is gameplay data, not a cosmetic skin.
 
 ## Fighter and form identity
 
 A form can affect:
 
 - card compatibility;
-- available LIMITs;
+- equipped/available LIMITs;
 - battle statistics;
-- physical fighter graphics;
+- graphics/palette identity;
 - animation-resource selection;
 - portraits/overworld representation;
 - story/encounter context.
 
-For ROM-backed work, the important chain is conceptually:
+For ROM-backed work, the physical chain is treated explicitly:
 
 ```text
 character / form
 → ROM form identity
-→ visual profile
-→ graphics / palette
-→ animation resource + sequence
-→ physical frame
+→ actor visual profile key
+→ graphics bank + palette
+→ AnimationResource
+→ sequence selector
+→ frame index / visual frame
+→ metasprite / graphics blocks
+→ physical fighter image
 ```
 
-The project avoids matching forms only by visual similarity because that can silently associate the correct name with the wrong physical fighter data.
+The project does not identify forms by visual similarity alone. A renderer that shows the wrong fighter with internally consistent bank/palette math is still wrong.
+
+## ROM identity vs runtime semantic pose
+
+A runtime pose name such as:
+
+```text
+idle
+guard
+hurt
+beam_charge
+beam_fire
+knockback_down
+```
+
+is a semantic runtime convenience. It does **not** prove that the original ROM contains a dedicated physical sequence with that same human-readable meaning.
+
+The project therefore distinguishes:
+
+- **PHYSICAL** — directly linked to demonstrated ROM physical frames;
+- **COMPOSITE** — assembled from demonstrated physical material;
+- **FALLBACK** — runtime substitute when no dedicated physical equivalent is demonstrated;
+- **REFERENCE_FX** — visual effect rather than fighter pose;
+- **MISSING / UNRESOLVED** — evidence is not sufficient yet.
+
+A 100% runtime pose-resolution rate is not the same as 100% physical-pose coverage.
 
 ## Teams
 
-The active battle model supports:
+The battle model supports:
 
-- **1v1** battles;
-- **2v2** battles;
-- active + reserve members;
-- manual character switching where legal;
-- automatic continuation after KO when a reserve remains.
+- **1v1**;
+- **2v2**;
+- one active fighter plus reserve state;
+- legal manual switching through `CHARA`;
+- automatic continuation when a KO occurs and a reserve remains.
 
-The exact public setup UI may change during alpha, but team state belongs to the deterministic battle/runtime layer.
+Team state belongs to the battle/runtime authority. Visible exit/entry choreography belongs to Presentation.
 
-## Player loadout vs rival loadout
+## LIMIT loadout
 
-The intended setup model is asymmetric:
+Each battle member has **five LIMIT slots** in the battle data model used by the ROM research.
+
+LIMIT cards are equipped/reusable options rather than cards drawn from the physical hand. Their legality still depends on phase, compatibility, CC and the active power-window state.
+
+See [Battle System](BATTLE_SYSTEM.md) and [Cards](CARDS.md).
+
+## Player setup vs rival setup
+
+The project intentionally keeps player and rival setup asymmetric.
 
 ### Player
 
-The player can configure the permitted parts of their battle setup, including fighter/form and their own loadout.
+The player may configure the permitted parts of their own setup, including fighter/form and their own loadout where the selected game mode allows it.
 
 ### Rival
 
-The rival can be selected/inspected, but its canonical deck and LIMIT setup should come from the appropriate game/ROM-derived preset rather than becoming a second freely editable player loadout.
+The rival can be selected and inspected, but its default deck/LIMIT configuration is intended to come from the appropriate **ROM-derived/canonical enemy preset** rather than behaving like a second freely editable player.
 
-This keeps versus setup useful without erasing the identity of original encounters and CPU configurations.
+Until a specific rival preset is publicly derived and verified, the project should label that preset as unresolved rather than inventing a plausible deck.
 
-## Physical animation frames
+## Physical fighter fidelity
 
-A runtime pose name such as `idle`, `guard`, `beam_charge` or `hurt` is not automatically proof that the original ROM contains a dedicated physical sequence with that semantic label.
+For a fighter frame to be considered physically linked, the project should be able to trace its identity through the ROM-backed chain rather than merely find a PNG that looks correct.
 
-The project distinguishes:
+Relevant evidence can include:
 
-- **PHYSICAL** — directly linked to demonstrated physical ROM frames;
-- **COMPOSITE** — built from demonstrated parts/sequences;
-- **FALLBACK** — runtime substitute when a dedicated physical pose is unavailable;
-- **REFERENCE_FX** — visual effect rather than fighter pose;
-- **MISSING / UNRESOLVED** — evidence not yet sufficient.
+- ROM form record;
+- actor visual profile key;
+- graphics bank;
+- physical palette;
+- AnimationResource;
+- resolved sequence;
+- visual frame/metasprite;
+- graphics blocks/tiles;
+- runtime consumption.
 
-This vocabulary prevents runtime convenience from being mistaken for original-game evidence.
+This is why sprite extraction, semantic pose mapping and production animation are tracked as related but separate problems.
 
 ## Character catalogue
 
-The public project currently documents the character/form system at the architectural level. A full per-character catalogue — forms, stats, LIMITs, compatibility and verified physical sequences — should be generated from sanitized public data rather than maintained manually in multiple places.
+A complete public catalogue should ultimately be generated from sanitized canonical data and include, per fighter/form:
+
+- ROM identity;
+- stats;
+- compatibility;
+- LIMIT loadout/preset data where public-safe;
+- physical animation coverage;
+- runtime fallback/composite status;
+- story/encounter usage.
+
+That catalogue should not be manually duplicated across documentation files.
 
 ---
 
